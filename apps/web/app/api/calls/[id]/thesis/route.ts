@@ -6,6 +6,7 @@ import { desc, eq } from "drizzle-orm";
 import { agentRuns, circleActions, thesisUnlocks, users } from "@precall/shared/db/schema";
 import { getCall, getEvidence, hasUnlock } from "../../../../../lib/queries";
 import { errorJson, noStoreJson } from "../../../../../lib/api-security";
+import { recordAgentRevenueEvent } from "../../../../../lib/revenue";
 
 const thesisUnlockedEvent = parseAbiItem(
   "event ThesisUnlocked(uint256 indexed callId, address indexed buyer, uint256 amount)",
@@ -79,10 +80,19 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
               chain: "Arc Testnet",
               txHash: latestLog.transactionHash,
               relatedCallId: call.id,
+              relatedAgentId: call.agentId,
               status: "success",
               metadata: { onchainCallId: call.onchainCallId, registryAddress: registry },
             })
             .onConflictDoNothing();
+          await recordAgentRevenueEvent({
+            agentId: call.agentId,
+            sourceType: "bonded_unlock",
+            sourceId: call.id,
+            unlockerWallet: walletAddress,
+            amountUsdc: amount,
+            txHash: latestLog.transactionHash,
+          });
         }
       }
     } catch (error) {

@@ -64,10 +64,10 @@ export function sportsOnlyCategory(fallback = "") {
 }
 
 const SPORTS_PATTERNS = [
-  /\b(nba|wnba|mlb|nhl|nfl|ufc|ucl|atp|wta|ipl|mma|cs2|lol)\b/,
+  /\b(nba|wnba|mlb|nhl|nfl|ufc|ucl|atp|wta|ipl|mma|cs2|lol|ligamx|liga mx|mex)\b/,
   /\b(champions league|premier league|la liga|serie a|bundesliga|ligue 1|world cup|soccer|football|basketball|baseball|hockey|tennis|golf|cricket|rugby|boxing|dota|counter-strike|league of legends|valorant)\b/,
-  /\b(epl|ere|fifwc|nba|mlb|nhl|nfl|ufc|atp|wta|lol|dota2|cs2|cricipl)-[a-z0-9-]+/,
-  /\b(afc|fc|united|city|hotspur|ajax|inter|madrid|barcelona|arsenal|chelsea|liverpool|tottenham|brighton|everton|west ham|newcastle|aston villa)\b/,
+  /\b(epl|ere|fifwc|ligamx|mex|nba|mlb|nhl|nfl|ufc|atp|wta|lol|dota2|cs2|cricipl)-[a-z0-9-]+/,
+  /\b(afc|fc|united|city|hotspur|ajax|inter|madrid|barcelona|arsenal|chelsea|liverpool|tottenham|brighton|everton|west ham|newcastle|aston villa|necaxa|toluca|pumas|club america|tigres|monterrey|chivas|cruz azul|pachuca|santos laguna)\b/,
   /\b(over|under)\s+\d+(?:\.\d+)?\s+(goals?|points?|runs?)\b/,
   /\b(total goals?|team goals?|both teams to score|btts|double chance|correct score|score range)\b/,
 ];
@@ -86,7 +86,7 @@ export function classifySportsMarket(market: PolymarketMarket): SportsMarketClas
   const reasons: string[] = [];
   const hasSportsSignal = SPORTS_PATTERNS.some((pattern) => pattern.test(text));
   const hasFalsePositiveSignal = NON_SPORTS_FALSE_POSITIVE_PATTERNS.some((pattern) => pattern.test(text));
-  const hasExplicitCompetitionSignal = /\b(nba|wnba|mlb|nhl|nfl|ufc|ucl|atp|wta|ipl|fifa|fifwc|world cup|premier league|champions league|la liga|serie a|bundesliga|ligue 1|roland garros)\b|\b(epl|ere|fifwc|nba|mlb|nhl|nfl|ufc|atp|wta|lol|dota2|cs2|cricipl)-/.test(text);
+  const hasExplicitCompetitionSignal = /\b(nba|wnba|mlb|nhl|nfl|ufc|ucl|atp|wta|ipl|fifa|fifwc|world cup|premier league|champions league|la liga|serie a|bundesliga|ligue 1|liga mx|ligamx|roland garros)\b|\b(epl|ere|fifwc|ligamx|mex|nba|mlb|nhl|nfl|ufc|atp|wta|lol|dota2|cs2|cricipl)-/.test(text);
   const isSports = hasSportsSignal && (!hasFalsePositiveSignal || hasExplicitCompetitionSignal);
   if (!isSports) reasons.push("not_sports");
 
@@ -101,7 +101,7 @@ export function classifySportsMarket(market: PolymarketMarket): SportsMarketClas
   else if (/\b(golf)\b/.test(text)) category = "golf";
   else if (/\b(rugby)\b/.test(text)) category = "rugby";
   else if (/\b(dota\s*2?|dota2|counter-strike|cs2|league of legends|lol|valorant|esports?)\b/.test(text)) category = "esports";
-  else if (/\b(soccer|ucl|champions league|epl|ere|fifwc|premier league|la liga|serie a|bundesliga|ligue 1|fifa|world cup|afc|fc|united|city|hotspur|ajax|inter)\b/.test(text)) category = "soccer";
+  else if (/\b(soccer|ucl|champions league|epl|ere|fifwc|ligamx|liga mx|mex|premier league|la liga|serie a|bundesliga|ligue 1|fifa|world cup|afc|fc|united|city|hotspur|ajax|inter|necaxa|toluca|pumas|club america|tigres|monterrey|chivas|cruz azul|pachuca|santos laguna)\b/.test(text)) category = "soccer";
   else if (/\bfootball\b/.test(text)) category = "football";
   else if (isSports) category = "other_sports";
 
@@ -246,6 +246,7 @@ export function sportsEventTime(market: PolymarketMarket): string | null {
 
 const SPORTS_SLUG_TEAM_NAMES: Record<string, string> = {
   aja: "Ajax",
+  ame: "Club America",
   arg: "Argentina",
   ars: "Arsenal",
   bih: "Bosnia and Herzegovina",
@@ -256,9 +257,11 @@ const SPORTS_SLUG_TEAM_NAMES: Record<string, string> = {
   esp: "Spain",
   eve: "Everton",
   fra: "France",
+  nec: "Necaxa",
   nyk: "New York Knicks",
   okc: "Oklahoma City Thunder",
   sas: "San Antonio Spurs",
+  tol: "Toluca",
   tot: "Tottenham Hotspur",
   utr: "Utrecht",
 };

@@ -15,7 +15,7 @@ import {
   polymarketCopyUrl,
 } from "@precall/shared/polymarket";
 import { aggregateVotes, brierScoreBps, hashText, passesPublishThresholds, publishThresholdFailures, type PublishThresholds } from "@precall/shared/scoring";
-import { aggregateSportsVotes, buildSportsEvidenceContext, classifySportsCallStatus, evaluateSportsCandidate, evaluateSportsEvidenceQuality, filterCurrentSportsEvidence, maxSportsAnalyzedPerRun, rankSportsCandidates, sportsDailyTarget, sportsDiscoveryLimit, sportsEnabled, sportsEvidenceGroupKey, sportsMarketplaceEvidenceQuery, sportsOnlyCategory, sportsEventTime, sportsStatusReason, sportsThresholdFailures, sportsThresholds, sportsVerdictForStatus, type SportsCallStatus, type SportsCandidate, type SportsSkip } from "@precall/shared/sports";
+import { aggregateSportsVotes, buildSportsEvidenceContext, classifySportsCallStatus, classifySportsMarket, evaluateSportsCandidate, evaluateSportsEvidenceQuality, filterCurrentSportsEvidence, maxSportsAnalyzedPerRun, rankSportsCandidates, sportsDailyTarget, sportsDiscoveryLimit, sportsEnabled, sportsEvidenceGroupKey, sportsMarketplaceEvidenceQuery, sportsOnlyCategory, sportsEventTime, sportsStatusReason, sportsThresholdFailures, sportsThresholds, sportsVerdictForStatus, type SportsCallStatus, type SportsCandidate, type SportsSkip } from "@precall/shared/sports";
 import type { MarketSnapshot, OutcomeSnapshot, PolymarketMarket } from "@precall/shared/types";
 import {
   ensureCouncilAgent,
@@ -248,14 +248,52 @@ function sportsCandidateSummary(candidate: SportsCandidate): Omit<SportsSkip, "r
 }
 
 function sportsRejectedSummary(market: PolymarketMarket, reasons: string[]): SportsSkip {
+  const classification = classifySportsMarket(market);
   return {
     marketId: market.marketId,
     title: market.title,
     reasons,
     url: market.url,
+    category: classification.category,
+    marketKind: classification.marketKind,
     liquidityUsd: market.liquidityUsd,
     volume24hUsd: market.volume24hUsd,
     closeTime: market.closeTime,
+  };
+}
+
+function rankedReasonSummary(summary: Record<string, number>) {
+  return Object.entries(summary)
+    .sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0]))
+    .slice(0, 8)
+    .map(([reason, count]) => ({ reason, count }));
+}
+
+function sportsNoEligibleDiagnostics(input: { skipped: SportsSkip[]; failed: RunFailedMarket[]; enforcedCategory?: string | undefined }) {
+  const skippedByReason = summarizeSkipReasons(input.skipped);
+  const rejectedSample = input.skipped
+    .filter((item) => item.reasons.some((reason) => reason !== "analysis_limit"))
+    .slice(0, 10)
+    .map((item) => ({
+      marketId: item.marketId,
+      title: item.title,
+      category: item.category || "unknown",
+      marketKind: item.marketKind || "unknown",
+      reasons: item.reasons,
+      closeTime: item.closeTime || null,
+      liquidityUsd: item.liquidityUsd ?? null,
+    }));
+
+  return {
+    message: `No eligible ${input.enforcedCategory || "sports"} candidates passed the worker gates in this run.`,
+    enforcedCategory: input.enforcedCategory || "all",
+    primaryReasons: rankedReasonSummary(skippedByReason),
+    categoryRejected: skippedByReason.wrong_sports_category || 0,
+    nonSportsRejected: skippedByReason.not_sports || 0,
+    timingRejected: (skippedByReason.outside_sports_window || 0) + (skippedByReason.event_started || 0) + (skippedByReason.event_starting_soon || 0) + (skippedByReason.missing_close_time || 0),
+    formatRejected: skippedByReason.unsupported_market_format || 0,
+    failedCount: input.failed.length,
+    rejectedSample,
   };
 }
 
@@ -907,6 +945,8 @@ export async function runSportsEdge() {
     }
   }
 
+  const skippedByReason = summarizeSkipReasons(skipped);
+
   return {
     discoveryLimit,
     dailyTarget,
@@ -925,7 +965,8 @@ export async function runSportsEdge() {
     sportsCalls,
     skipped,
     failed,
-    skippedByReason: summarizeSkipReasons(skipped),
+    skippedByReason,
+    noEligibleDiagnostics: ranked.length === 0 ? sportsNoEligibleDiagnostics({ skipped, failed, enforcedCategory: enforcedSportsCategory }) : null,
     topSportsCandidates: ranked.slice(0, Math.max(dailyTarget, 10)).map(sportsCandidateSummary),
     circleMarketplaceEvidenceProviders: ["parallel_x402_search", "aisa_x402_social", "aisa_x402_tavily", "stableenrich_x402_firecrawl"],
   };

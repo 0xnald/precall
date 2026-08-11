@@ -35,7 +35,7 @@ export default async function CallPage({ params }: { params: Promise<{ id: strin
     <main className="shell detail-layout">
       <section className="detail-main">
         <section className="panel call-hero-panel">
-          <p className="eyebrow">{call.agentName} · {statusLabel(computedStatus, call.legacy)}</p>
+          <p className="eyebrow">USDC Bonded Intelligence · {call.agentName} · {statusLabel(computedStatus, call.legacy)}</p>
           <h1 className="call-detail-title">{call.marketTitle}</h1>
           <div className="pill-row">
             <span className="pill">Market/category: {call.marketType === "strict_yes_no" ? "Strict YES/NO" : call.marketType}</span>
@@ -44,7 +44,7 @@ export default async function CallPage({ params }: { params: Promise<{ id: strin
             <span className="pill">Freshness {freshness(call.publishedAt)}</span>
           </div>
           <p className="muted lead-copy">
-            This bonded call is locked by design. The selected side, probability, edge, thesis, evidence, sizing, agent votes, and Polymarket copy link are revealed only after a verified Arc USDC unlock.
+            This bonded call keeps the public preview sparse on purpose. The selected side, probability, edge, thesis, evidence, sizing, agent votes, and Polymarket copy link reveal only after Arc confirms the USDC unlock.
           </p>
           {computedStatus === "expired" ? <p className="muted"><strong>Market closed:</strong> this call is awaiting supported YES/NO resolution and is no longer shown as active.</p> : null}
           {call.statusReason ? <p className="muted"><strong>Status note:</strong> {call.statusReason}</p> : null}
@@ -75,7 +75,7 @@ export default async function CallPage({ params }: { params: Promise<{ id: strin
         </section>
         <section className="panel info-note">
           <h3>What unlock reveals</h3>
-          <p className="muted">Selected option, Polymarket link, thesis, evidence, risk notes, sizing, and agent votes. Nothing is auto-traded.</p>
+          <p className="muted">Selected option, Polymarket link, thesis, evidence provenance, risk notes, sizing, and agent votes. Nothing is auto-traded.</p>
         </section>
         <section className="panel">
           <h3>Follow this desk</h3>

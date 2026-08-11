@@ -17,9 +17,14 @@ function freshness(date: Date | string | null) {
 }
 
 function statusLabel(status: string) {
-  if (status === "strong_call") return "Strong";
-  if (status === "lean_call") return "Lean";
-  return "High Risk";
+  if (status === "strong_call") return "Strong edge";
+  if (status === "lean_call") return "Lean edge";
+  return "High-risk intel";
+}
+
+function kickoff(date: Date | string | null) {
+  if (!date) return "Kickoff unknown";
+  return `Kickoff ${new Intl.DateTimeFormat("en", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZone: "UTC", timeZoneName: "short" }).format(new Date(date))}`;
 }
 
 function previewReason(statusReason: string) {
@@ -59,10 +64,11 @@ export function SportsCard({ idea }: { idea: SportsIdea }) {
           <span className="muted">{idea.category} · {idea.marketKind} · {freshness(idea.updatedAt)}</span>
         </div>
         <h2 className="call-title">{idea.marketTitle}</h2>
-        <p className="muted">By <Link href={`/agents/${idea.agentId}`}><strong>{idea.agentName}</strong></Link>{idea.agentTagline ? ` · ${idea.agentTagline}` : ""}</p>
+        <p className="muted">Desk <Link href={`/agents/${idea.agentId}`}><strong>{idea.agentName}</strong></Link>{idea.agentTagline ? ` · ${idea.agentTagline}` : ""}</p>
         <div className="sports-prediction-banner">
-          <span>AI Prediction</span>
-          <strong>{isUnlocked ? idea.selectedOption : "Locked (Unlock to reveal)"}</strong>
+          <span>{isUnlocked ? "Selected side" : "Selected side locked"}</span>
+          <strong>{isUnlocked ? idea.selectedOption : "Unlock to reveal the call"}</strong>
+          <small>{kickoff(idea.eventStartTime)}</small>
         </div>
         <div className="analysis-metric-grid sports-metrics" aria-label="Sports Live Call public metrics">
           <div><span>Market price</span><strong>{bpsToPercent(idea.marketPriceBps)}</strong></div>
@@ -72,8 +78,8 @@ export function SportsCard({ idea }: { idea: SportsIdea }) {
           <div><span>Risk</span><strong>{idea.riskLevel}</strong></div>
           <div><span>Unlock</span><strong>{usdc(idea.unlockPrice)}</strong></div>
         </div>
-        <p className="muted"><strong>Short reasoning preview:</strong> {previewReason(idea.statusReason)}</p>
-        <p className="muted">Full reasoning, evidence, market link, probability breakdown, and risk notes unlock with Arc USDC.</p>
+        <p className="muted"><strong>Public signal:</strong> {previewReason(idea.statusReason)}</p>
+        <p className="muted">Unlock to see the reasoning trace, evidence provenance, market link, probability breakdown, and risk notes.</p>
         <p className="muted nfa-note">NFA: Live calls are AI-generated market intelligence, and not financial advice.</p>
         <div className="pill-row">
           <span className="pill">{idea.agentReviewStatus || "pending_review"}</span>

@@ -6,7 +6,7 @@ import { getWalletClient } from "@wagmi/core";
 import { useAccount, useConfig, useConnect, useSwitchChain, useWriteContract } from "wagmi";
 import { arcTestnet } from "@precall/shared/chains";
 import { erc20Abi, precallRegistryAbi } from "@precall/shared/contracts/abi";
-import { ExternalLink, LockKeyhole, Unlock } from "lucide-react";
+import { BadgeDollarSign, ExternalLink, LockKeyhole, Unlock } from "lucide-react";
 import { actionLabel, bpsToPercent, outcomeForAction, recommendationHelp, recommendationLabel, selectedProbabilityForAction, usdc } from "../lib/format";
 import { safeArcTxUrl, safeExternalUrl } from "../lib/safe-url";
 import { FeedbackCapture } from "./feedback-capture";
@@ -179,9 +179,9 @@ export function UnlockThesis({
       <section className="panel unlocked-analysis analysis-shell">
         <div className="analysis-header">
           <div>
-            <p className="eyebrow">Unlocked recommendation</p>
+            <p className="eyebrow">Unlocked Recommendation</p>
             <h2>{action}</h2>
-            <p className="muted">{help}</p>
+            <p className="muted">Arc unlock verified. {help}</p>
           </div>
           <span className="status-chip ok"><Unlock size={14} /> Unlocked</span>
         </div>
@@ -270,14 +270,15 @@ export function UnlockThesis({
     <section className="thesis-lock unlock-cta-panel">
       <div>
         <p className="eyebrow">Arc USDC unlock</p>
-        <h3><LockKeyhole size={18} /> Thesis locked</h3>
-        <p className="muted">Pay {usdc(unlockPrice)} on Arc to unlock the selected option, Polymarket link, thesis, evidence, risks, sizing logic, and agent votes.</p>
+        <h3><LockKeyhole size={18} /> Bonded thesis locked</h3>
+        <p className="muted">Pay {usdc(unlockPrice)} on Arc to reveal the selected option, Polymarket link, thesis, evidence provenance, risks, sizing logic, and agent votes.</p>
+        <div className="unlock-steps" aria-label="Thesis unlock sequence"><span>Approve</span><span>Unlock</span><span>Read</span></div>
       </div>
       <button className="button" onClick={unlock} type="button">
         <Unlock size={17} />
         {isConnected ? "Unlock thesis" : "Connect to unlock"}
       </button>
-      {status ? <p className="muted">{status}</p> : null}
+      {status ? <p className="muted unlock-status">{status}</p> : null}
       {txHash ? <p className="muted">Transaction: <a href={safeArcTxUrl(txHash)} rel="noopener noreferrer" target="_blank">view on ArcScan</a></p> : null}
     </section>
   );
@@ -362,24 +363,24 @@ export function TipJar({
   }
 
   return (
-    <div className="panel tip-jar-widget" style={{ marginTop: "1.5rem", border: "1px dashed var(--border-color, #ccc)", padding: "1.2rem", borderRadius: "8px" }}>
-      <h4>☕ Support the Creator Agent {tipSuccess && " ✓"}</h4>
-      <p className="muted" style={{ fontSize: "0.9rem", marginBottom: "1rem" }}>
-        Tip the publisher of this agent to reward accurate analysis. Tips go directly to the agent&apos;s owner wallet: <code style={{ fontSize: "0.8rem" }}>{receiverAddress}</code>.
+    <div className="panel tip-jar-widget">
+      <h4><BadgeDollarSign size={17} /> Support the agent desk {tipSuccess && <span className="status-chip ok">Sent</span>}</h4>
+      <p className="muted">
+        Tips reward useful analysis and go directly to the agent owner wallet: <code className="tip-wallet">{receiverAddress}</code>.
       </p>
-      <div className="pill-row" style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginBottom: "1rem" }}>
+      <div className="pill-row tip-options">
         {["0.01", "0.05", "0.10", "0.25"].map((amount) => (
           <button
             key={amount}
-            className="pill"
+            className="pill tip-button"
             onClick={() => sendTip(amount)}
-            style={{ cursor: "pointer", background: "none", border: "1px solid var(--border-color, #ccc)", color: "inherit", padding: "0.25rem 0.5rem" }}
+            type="button"
           >
             Tip ${amount}
           </button>
         ))}
       </div>
-      {tipStatus ? <p className="muted" style={{ fontSize: "0.85rem", marginTop: "0.5rem" }}>{tipStatus}</p> : null}
+      {tipStatus ? <p className="muted unlock-status">{tipStatus}</p> : null}
     </div>
   );
 }

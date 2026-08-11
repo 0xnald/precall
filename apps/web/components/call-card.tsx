@@ -42,7 +42,7 @@ export function CallCard({ call }: { call: CallRow }) {
           <span className="pill">Freshness {freshness(call.publishedAt)}</span>
         </div>
         <p className="muted">
-          Pick direction, probability, edge, evidence, sizing, and Polymarket copy link are revealed only after a verified USDC thesis unlock on Arc.
+          Selected side, probability, edge, evidence, sizing, and Polymarket copy link are revealed only after a verified Arc USDC thesis unlock.
         </p>
         {isAwaitingResolution ? <p className="muted"><strong>Market closed:</strong> this call is kept for auditability and should not be treated as active.</p> : null}
         {call.txHash ? (
@@ -53,7 +53,7 @@ export function CallCard({ call }: { call: CallRow }) {
       </div>
       <aside className="side-score">
         <div>
-          <span className="muted side-score-label">{isAwaitingResolution ? "ENDED" : "LOCKED"}</span>
+          <span className="muted side-score-label">{isAwaitingResolution ? "ENDED" : "UNLOCK"}</span>
           <div className="score">{usdc(call.unlockPrice)}</div>
         </div>
         <Link className="button" href={`/calls/${call.id}`}>

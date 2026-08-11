@@ -331,6 +331,8 @@ export async function getDemoData() {
     x402Spend: sql<string>`(select coalesce(sum(amount_usdc), 0)::text from ${circleActions} where action_type in ('x402_api_payment', 'x402_evidence_payment') and status = 'success')`,
     dailyX402Spend: sql<string>`(select coalesce(sum(amount_usdc), 0)::text from ${circleActions} where action_type in ('x402_api_payment', 'x402_evidence_payment') and status = 'success' and created_at >= date_trunc('day', now()))`,
     x402ApiPayments: sql<number>`(select count(*)::int from ${circleActions} where action_type in ('x402_api_payment', 'x402_evidence_payment'))`,
+    x402ApiSales: sql<number>`(select count(*)::int from ${circleActions} where action_type = 'x402_api_sale' and status = 'success')`,
+    x402ApiSalesVolume: sql<string>`(select coalesce(sum(amount_usdc), 0)::text from ${circleActions} where action_type = 'x402_api_sale' and status = 'success')`,
     circleActions: sql<number>`(select count(*)::int from ${circleActions})`,
     sportsIdeas: sql<number>`(select count(*)::int from ${sportsPredictions} where status in ('strong_call', 'lean_call', 'high_risk_call', 'avoid_call'))`,
     activeSportsCalls: sql<number>`(select count(*)::int from ${sportsPredictions} where status in ('strong_call', 'lean_call', 'high_risk_call', 'avoid_call') and (expires_at is null or expires_at > now()) and event_start_time is not null and event_start_time > now())`,

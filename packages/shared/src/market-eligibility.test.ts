@@ -17,7 +17,7 @@ function market(overrides: Partial<PolymarketMarket> = {}): PolymarketMarket {
     clobTokenIds: ["yes", "no"],
     liquidityUsd: 20_000,
     volume24hUsd: 1_000,
-    closeTime: "2026-06-30T00:00:00.000Z",
+    closeTime: "2099-06-30T00:00:00.000Z",
     status: "active",
     ...overrides,
   };

@@ -42,6 +42,31 @@ test("platform unlock totals include both bonded thesis and sports unlocks", () 
   assert.match(admin, /Total unlocks/);
 });
 
+test("unlock routes accrue agent revenue and harden tx-hash replay", () => {
+  const bondedRoute = file("apps/web/app/api/unlocks/record/route.ts");
+  const sportsRoute = file("apps/web/app/api/sports/unlocks/record/route.ts");
+  const thesisRoute = file("apps/web/app/api/calls/[id]/thesis/route.ts");
+  const revenue = file("apps/web/lib/revenue.ts");
+  const schema = file("packages/shared/src/db/schema.ts");
+
+  assert.match(revenue, /splitRevenueUsdc/);
+  assert.match(revenue, /agentRevenueEvents/);
+  assert.match(bondedRoute, /recordAgentRevenueEvent/);
+  assert.match(sportsRoute, /recordAgentRevenueEvent/);
+  assert.match(thesisRoute, /recordAgentRevenueEvent/);
+  assert.match(schema, /circle_actions_tx_hash_unique_idx/);
+  assert.match(schema, /thesis_unlocks_tx_hash_idx/);
+  assert.match(schema, /sports_unlocks_tx_hash_unique_idx/);
+});
+
+test("sports worker returns no-eligible diagnostics for gated soccer runs", () => {
+  const worker = file("apps/worker/src/run-cycle.ts");
+  assert.match(worker, /sportsNoEligibleDiagnostics/);
+  assert.match(worker, /noEligibleDiagnostics/);
+  assert.match(worker, /primaryReasons/);
+  assert.match(worker, /rejectedSample/);
+});
+
 test("sports unlock flow uses Arc USDC transfer and verified server indexing", () => {
   const component = file("apps/web/components/unlock-sports-call.tsx");
   const recordRoute = file("apps/web/app/api/sports/unlocks/record/route.ts");
@@ -131,6 +156,18 @@ test("admin run output has readable summary before collapsible raw JSON", () => 
   assert.match(admin, /admin-result-grid/);
   assert.match(admin, /Show raw worker JSON/);
   assert.match(admin, /Latest error/);
+});
+
+test("public soccer API records x402 sales separately from evidence spend", () => {
+  const route = file("apps/web/app/api/v1/soccer/predictions/route.ts");
+  const queries = file("apps/web/lib/queries.ts");
+  const types = file("packages/shared/src/types.ts");
+
+  assert.match(route, /actionType: "x402_api_sale"/);
+  assert.match(route, /PAYMENT-REQUIRED/);
+  assert.match(route, /X-Precall-Result-Count/);
+  assert.match(queries, /x402ApiSales/);
+  assert.match(types, /"x402_api_sale"/);
 });
 
 test("admin and demo expose explicit x402 payment network labels", () => {

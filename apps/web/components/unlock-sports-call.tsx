@@ -202,9 +202,9 @@ export function UnlockSportsCall({ sportsPredictionId, unlockPrice, agentOwner, 
       <section className="sports-unlocked-analysis analysis-shell">
         <div className="analysis-header">
           <div>
-            <p className="eyebrow">Unlocked Sports Live Call</p>
+            <p className="eyebrow">Unlocked Football Intelligence</p>
             <h3><Unlock size={18} /> Full sports analysis unlocked</h3>
-            <p className="muted">This sports call is non-bonded market intelligence. It is not a guaranteed outcome or financial advice.</p>
+            <p className="muted">Arc payment verified. This is non-bonded market intelligence, not a guaranteed outcome or financial advice.</p>
           </div>
           <span className="status-chip ok">Unlocked</span>
         </div>
@@ -302,14 +302,15 @@ export function UnlockSportsCall({ sportsPredictionId, unlockPrice, agentOwner, 
     <section className="thesis-lock sports-lock unlock-cta-panel">
       <div>
         <p className="eyebrow">Arc USDC unlock</p>
-        <h3><LockKeyhole size={18} /> Sports analysis locked</h3>
-        <p className="muted">Pay {usdc(unlockPrice)} with Arc USDC to unlock full reasoning, evidence, market link, deeper probability breakdown, and risk notes.</p>
+        <h3><LockKeyhole size={18} /> Intelligence packet locked</h3>
+        <p className="muted">Pay {usdc(unlockPrice)} with Arc USDC to reveal the selected side, reasoning trace, evidence provenance, market link, probability breakdown, and risk notes.</p>
+        <div className="unlock-steps" aria-label="Sports unlock sequence"><span>Wallet</span><span>Arc payment</span><span>Indexed access</span></div>
       </div>
       <button className="button" onClick={unlock} type="button">
         <Unlock size={17} />
         {isConnected ? "Unlock sports call" : "Connect to unlock"}
       </button>
-      {status ? <p className="muted">{status}</p> : null}
+      {status ? <p className="muted unlock-status">{status}</p> : null}
       {txHash ? <p className="muted">Transaction: <a href={safeArcTxUrl(txHash)} rel="noopener noreferrer" target="_blank">view on ArcScan</a></p> : null}
     </section>
   );

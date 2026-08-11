@@ -171,6 +171,7 @@ export const thesisUnlocks = pgTable(
       table.callId,
       table.userWallet,
     ),
+    txHashIdx: uniqueIndex("thesis_unlocks_tx_hash_idx").on(table.txHash),
   }),
 );
 
@@ -186,7 +187,7 @@ export const sportsUnlocks = pgTable(
   },
   (table) => ({
     sportsWalletIdx: uniqueIndex("sports_unlocks_prediction_wallet_idx").on(table.sportsPredictionId, table.userWallet),
-    txHashIdx: index("sports_unlocks_tx_hash_idx").on(table.txHash),
+    txHashIdx: uniqueIndex("sports_unlocks_tx_hash_unique_idx").on(table.txHash),
   }),
 );
 
@@ -409,6 +410,7 @@ export const circleActions = pgTable(
   },
   (table) => ({
     actionTypeIdx: index("circle_actions_action_type_idx").on(table.actionType),
+    txHashIdx: uniqueIndex("circle_actions_tx_hash_unique_idx").on(table.txHash),
     callIdx: index("circle_actions_call_idx").on(table.relatedCallId),
     agentIdx: index("circle_actions_agent_idx").on(table.relatedAgentId),
     marketIdx: index("circle_actions_market_idx").on(table.relatedMarketId),

@@ -1,4 +1,4 @@
-import { ShieldCheck, Trophy } from "lucide-react";
+import { Code2, ShieldCheck, Trophy } from "lucide-react";
 import { friendlySetupError } from "../../lib/format";
 import { getActiveSportsCallCount } from "../../lib/queries";
 import { getMarketplaceSportsPredictions } from "../../lib/marketplace";
@@ -45,19 +45,20 @@ export default async function SportsPage() {
     <main className="shell page sports-page">
       <section className="hero compact-hero">
         <div>
-          <p className="eyebrow">Sports Live Calls</p>
-          <h1>AI predictions for active Polymarket sports markets.</h1>
+          <p className="eyebrow">Football Intelligence</p>
+          <h1>Soccer calls filtered for timing, evidence, liquidity, and unlockability.</h1>
+          <p>Precall publishes only active soccer market intelligence that survived the worker gates. The selected side and full reasoning stay locked until Arc confirms USDC payment.</p>
         </div>
         <div className="hero-card">
           <div className="pill-row">
-            <span className="pill"><Trophy size={14} /> {activeCount} Active Sports Live Call{activeCount === 1 ? "" : "s"}</span>
-            <span className="pill"><ShieldCheck size={14} /> Hosted agent marketplace</span>
+            <span className="pill"><Trophy size={14} /> {activeCount} Active Soccer Call{activeCount === 1 ? "" : "s"}</span>
+            <span className="pill"><ShieldCheck size={14} /> Arc USDC unlock rail</span>
           </div>
         </div>
       </section>
 
       <section className="metric-strip" aria-label="Sports Live Calls summary">
-        <div className="metric"><span>Active Sports Live Calls</span><strong>{activeCount}</strong></div>
+        <div className="metric"><span>Active Soccer Calls</span><strong>{activeCount}</strong></div>
         <div className="metric"><span>Strong</span><strong>{grouped.find((group) => group.status === "strong_call")?.ideas.length ?? 0}</strong></div>
         <div className="metric"><span>Lean / High Risk</span><strong>{(grouped.find((group) => group.status === "lean_call")?.ideas.length ?? 0) + (grouped.find((group) => group.status === "high_risk_call")?.ideas.length ?? 0)}</strong></div>
         <div className="metric"><span>Unlock rail</span><strong>Arc USDC</strong></div>
@@ -66,21 +67,25 @@ export default async function SportsPage() {
       <section className="section-heading">
         <div>
           <p className="eyebrow">Today</p>
-          <h2>{activeCount} Active Sports Live Call{activeCount === 1 ? "" : "s"}</h2>
+          <h2>{activeCount} Active Soccer Intelligence Packet{activeCount === 1 ? "" : "s"}</h2>
         </div>
       </section>
 
-      <section className="panel info-note">
-        <p>
-          Live calls are AI-generated market intelligence, and not financial advice.
-        </p>
+      <section className="panel info-note api-inline-panel">
+        <div>
+          <p className="eyebrow">Developer API</p>
+          <h3><Code2 size={18} /> x402 soccer intelligence feed</h3>
+          <p className="muted">Agents can request the same active soccer feed at <code>/api/v1/soccer/predictions</code>. The endpoint returns a Circle x402 payment challenge before serving JSON.</p>
+        </div>
+        <p className="muted">Live calls are AI-generated market intelligence, not financial advice.</p>
       </section>
 
       {setupError ? (
-        <section className="empty"><h2>Sports Live Calls are temporarily unavailable</h2><p className="muted">Precall is waiting for the latest sports calls to load.</p></section>
+        <section className="empty"><h2>Soccer intelligence is temporarily unavailable</h2><p className="muted">The page loaded, but the current call feed could not be read. Check worker health, database connectivity, and x402 provider status.</p></section>
       ) : activeCount === 0 ? (
         <section className="empty">
-          <h2>No active Sports Live Calls</h2>
+          <h2>No active soccer calls right now</h2>
+          <p className="muted">Precall is intentionally strict: markets must be soccer, active, early enough before kickoff, liquid, and supported by current evidence before they appear here.</p>
         </section>
       ) : (
         /* eslint-disable-next-line @typescript-eslint/no-explicit-any */

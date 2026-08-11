@@ -40,9 +40,9 @@ export default async function HomePage() {
       <HomeMotion />
       <section className="taste-hero taste-shell">
         <div className="taste-hero-copy">
-          <p className="taste-kicker">Arc-native prediction intelligence</p>
-          <h1>Agent calls you can inspect before you copy</h1>
-          <p className="taste-hero-lede">Precall scans live markets, separates public signal from paid reasoning, and lets users unlock the full thesis only after a verified Arc USDC payment.</p>
+          <p className="taste-kicker">Arc + Circle x402 football intelligence</p>
+          <h1>Football calls users can unlock, verify, and build on</h1>
+          <p className="taste-hero-lede">Precall turns live soccer markets into compact intelligence packets: public signal up front, full reasoning and evidence behind verified Arc USDC unlocks, and a paid JSON feed for agents.</p>
         </div>
         <div className="taste-hero-actions">
           <ConnectWallet />
@@ -54,7 +54,7 @@ export default async function HomePage() {
 
       <section className="taste-metrics taste-shell" aria-label="Precall activity summary">
         <div><span>Active Soccer Calls</span><strong>{activeSportsCalls}</strong></div>
-        <div><span>Soccer Coverage</span><strong>World Cup 2026</strong></div>
+        <div><span>Coverage Mode</span><strong>Soccer Only</strong></div>
         <div><span>Agent Desks</span><strong>{agents}</strong></div>
         <div><span>Total unlocks</span><strong>{totalUnlocks}</strong></div>
       </section>
@@ -62,30 +62,30 @@ export default async function HomePage() {
       <section className="taste-bento taste-shell" aria-label="Precall product surfaces">
         <article className="taste-bento-card taste-bento-large group-card">
           <div>
-            <p className="taste-kicker">Soccer Predictions</p>
-            <h2>Daily soccer predictions with onchain USDC accountability.</h2>
+            <p className="taste-kicker">Live Football Desk</p>
+            <h2>Scarce soccer calls with evidence-gated conviction.</h2>
           </div>
-          <p>Cards show match winner/over-under markets, agent council details, and freshness. Direction, probability, thesis, and evidence stay locked until the Arc USDC unlock is verified.</p>
+          <p>Cards show the market, freshness, liquidity context, confidence bands, and unlock price. The selected side, reasoning, evidence, and copy link stay locked until Arc confirms payment.</p>
           <Link className="taste-button taste-button-light" href="/sports">Open Active Calls</Link>
         </article>
 
         <article className="taste-bento-card taste-bento-accent group-card">
-          <p className="taste-kicker">Soccer Focus Only</p>
-          <h2>USDC Micro-nanopayments</h2>
-          <p>Every prediction thesis is locked and can be read by unlocking it with a micro USDC transaction. Non-sports and general markets have been completely removed.</p>
-          <span className="pill" style={{ display: 'inline-flex', padding: '0.2rem 0.5rem', background: 'var(--accent)', color: 'var(--black)', borderRadius: '4px', fontWeight: 'bold', width: 'fit-content' }}>Soccer Only</span>
+          <p className="taste-kicker">Agent Access</p>
+          <h2>x402-protected intelligence feed</h2>
+          <p>Developer clients and autonomous agents can call the paid soccer API, settle through Circle x402, and receive the current intelligence packet as JSON.</p>
+          <span className="pill api-pill">API: /api/v1/soccer/predictions</span>
         </article>
 
         <article className="taste-bento-card group-card">
           <CircleDollarSign size={22} />
-          <h3>Reasoning unlocks</h3>
-          <p>Full analysis reveals only after verified Arc USDC payment.</p>
+          <h3>Verified unlocks</h3>
+          <p>Full analysis opens only after the Arc payment is indexed.</p>
         </article>
 
         <article className="taste-bento-card group-card">
           <RadioTower size={22} />
           <h3>Five-role council</h3>
-          <p>tactical, stats, squad, context, and skeptic agents challenge every call.</p>
+          <p>Tactical, stats, squad, context, and skeptic agents challenge every call.</p>
         </article>
 
         <article className="taste-bento-card group-card">
@@ -96,8 +96,8 @@ export default async function HomePage() {
       </section>
 
       <section className="taste-marquee" aria-label="Precall platform loop">
-        <div>Polymarket prediction call live on Arc testnet, powered by Circle agentic stack x402 nanopayment. </div>
-        <div aria-hidden="true">Polymarket prediction call live on Arc testnet, powered by Circle agentic stack x402 nanopayment. </div>
+        <div>Football intelligence live on Arc testnet, powered by Circle x402 payments and agent evidence gates. </div>
+        <div aria-hidden="true">Football intelligence live on Arc testnet, powered by Circle x402 payments and agent evidence gates. </div>
       </section>
 
       <section className="taste-desire taste-shell">
@@ -109,13 +109,13 @@ export default async function HomePage() {
             </div>
             {setupError && ideas.length === 0 ? (
               <section className="empty taste-stack-card">
-                <h2>Live data is temporarily unavailable</h2>
-                <p className="muted">Precall is waiting for the latest call data to load.</p>
+                <h2>Live soccer intelligence is temporarily unavailable</h2>
+                <p className="muted">The interface is online, but the latest call feed could not be read. Check worker health or database connectivity before a production launch.</p>
               </section>
             ) : ideas.length === 0 ? (
               <section className="empty taste-stack-card">
-                <h2>No active soccer predictions available yet</h2>
-                <p className="muted">Precall publishes fewer calls on purpose</p>
+                <h2>No active soccer calls right now</h2>
+                <p className="muted">The worker only publishes markets that pass timing, liquidity, evidence, and confidence gates. Zero calls is acceptable; stale or unsupported calls should not be shown.</p>
               </section>
             ) : (
               <section className="grid taste-stack-list">
@@ -129,8 +129,8 @@ export default async function HomePage() {
       <section className="taste-platform-strip taste-shell" aria-label="Platform summary">
         <div><span><RadioTower size={14} /> Council</span><strong>5 roles</strong></div>
         <div><span><ShieldCheck size={14} /> Bonds</span><strong>USDC</strong></div>
-        <div><span><CircleDollarSign size={14} /> Unlocks</span><strong>$0.05</strong></div>
-        <div><span><Users size={14} /> Growth</span><strong>Arena</strong></div>
+        <div><span><CircleDollarSign size={14} /> Unlocks</span><strong>Arc USDC</strong></div>
+        <div><span><Users size={14} /> Access</span><strong>Users + Agents</strong></div>
       </section>
     </main>
   );

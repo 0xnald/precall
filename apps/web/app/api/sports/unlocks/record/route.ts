@@ -6,6 +6,7 @@ import { erc20Abi, precallSportsSplitterAbi } from "@precall/shared/contracts/ab
 import { createDb } from "@precall/shared/db/client";
 import { agents, circleActions, sportsPredictions, sportsUnlocks, users } from "@precall/shared/db/schema";
 import { addressSchema, errorJson, noStoreJson, parseJsonBody, positiveIntSchema, requireSameOrigin, txHashSchema } from "../../../../../lib/api-security";
+import { recordAgentRevenueEvent } from "../../../../../lib/revenue";
 
 function sportsUnlockReceiver(): Address | null {
   const raw = process.env.SPORTS_UNLOCK_RECEIVER_ADDRESS || process.env.PROTOCOL_TREASURY_ADDRESS || process.env.NEXT_PUBLIC_SPORTS_UNLOCK_RECEIVER_ADDRESS || "";
@@ -18,6 +19,10 @@ function sportsUnlockReceiver(): Address | null {
 
 function isExpired(expiresAt: Date | string | null) {
   return Boolean(expiresAt && new Date(expiresAt).getTime() <= Date.now());
+}
+
+function objectMetadata(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
 }
 
 const sportsUnlockRecordSchema = z.object({
@@ -47,6 +52,15 @@ export async function POST(request: Request) {
     .limit(1);
 
   if (existing.length > 0) {
+    const prior = existing[0];
+    const metadata = objectMetadata(prior?.metadata);
+    if (
+      prior?.actionType === "sports_unlock" &&
+      prior.walletAddress.toLowerCase() === wallet.toLowerCase() &&
+      Number(metadata.sportsPredictionId) === body.sportsPredictionId
+    ) {
+      return noStoreJson({ ok: true, alreadyRecorded: true });
+    }
     return errorJson("Replay attack detected. Transaction hash has already been used.", 400);
   }
 
@@ -55,6 +69,8 @@ export async function POST(request: Request) {
   if (prediction.status === "expired" || isExpired(prediction.expiresAt)) {
     return errorJson("Sports Live Call is expired and no longer unlockable.", 410);
   }
+  const agent = await db.query.agents.findFirst({ where: eq(agents.id, prediction.agentId) });
+  if (!agent) return errorJson("Agent not found.", 404);
 
   const usdcAddress = getAddress(process.env.ARC_USDC_ADDRESS || process.env.NEXT_PUBLIC_ARC_USDC_ADDRESS || ARC_TESTNET_USDC);
   const splitterEnv = process.env.NEXT_PUBLIC_SPORTS_SPLITTER_ADDRESS || process.env.SPORTS_SPLITTER_ADDRESS;
@@ -73,9 +89,6 @@ export async function POST(request: Request) {
   let amount: string;
 
   if (splitterAddress) {
-    const agent = await db.query.agents.findFirst({ where: eq(agents.id, prediction.agentId) });
-    if (!agent) return errorJson("Agent not found.", 404);
-
     const splitterLogs = receipt.logs.filter((log) => log.address.toLowerCase() === splitterAddress.toLowerCase());
     const events = parseEventLogs({ abi: precallSportsSplitterAbi, eventName: "SportsCallUnlocked", logs: splitterLogs });
     const event = events.find((item) => {
@@ -121,6 +134,7 @@ export async function POST(request: Request) {
     chain: "Arc Testnet",
     txHash: body.txHash,
     relatedMarketId: prediction.marketId,
+    relatedAgentId: prediction.agentId,
     status: "success",
     metadata: {
       sportsPredictionId: prediction.id,
@@ -130,6 +144,14 @@ export async function POST(request: Request) {
       splitterAddress,
     },
   }).onConflictDoNothing();
+  const revenue = await recordAgentRevenueEvent({
+    agentId: prediction.agentId,
+    sourceType: "sports_unlock",
+    sourceId: prediction.id,
+    unlockerWallet: wallet,
+    amountUsdc: amount,
+    txHash: body.txHash,
+  });
 
-  return noStoreJson({ ok: true });
+  return noStoreJson({ ok: true, revenue });
 }

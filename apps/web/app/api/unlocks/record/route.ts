@@ -5,6 +5,7 @@ import { precallRegistryAbi } from "@precall/shared/contracts/abi";
 import { createDb } from "@precall/shared/db/client";
 import { calls, circleActions, thesisUnlocks, users } from "@precall/shared/db/schema";
 import { addressSchema, errorJson, noStoreJson, parseJsonBody, positiveIntSchema, requireSameOrigin, txHashSchema } from "../../../../lib/api-security";
+import { recordAgentRevenueEvent } from "../../../../lib/revenue";
 import { z } from "zod";
 
 const unlockRecordSchema = z.object({
@@ -31,6 +32,10 @@ export async function POST(request: Request) {
     .limit(1);
 
   if (existing.length > 0) {
+    const prior = existing[0];
+    if (prior?.actionType === "thesis_unlock" && prior.relatedCallId === body.callId && prior.walletAddress.toLowerCase() === body.wallet.toLowerCase()) {
+      return noStoreJson({ ok: true, alreadyRecorded: true });
+    }
     return errorJson("Replay attack detected. Transaction hash has already been used.", 400);
   }
 
@@ -82,9 +87,18 @@ export async function POST(request: Request) {
     chain: "Arc Testnet",
     txHash: body.txHash,
     relatedCallId: body.callId,
+    relatedAgentId: call.agentId,
     status: "success",
     metadata: { onchainCallId: call.onchainCallId, registryAddress: registry },
   }).onConflictDoNothing();
+  const revenue = await recordAgentRevenueEvent({
+    agentId: call.agentId,
+    sourceType: "bonded_unlock",
+    sourceId: body.callId,
+    unlockerWallet: body.wallet,
+    amountUsdc: amount,
+    txHash: body.txHash,
+  });
 
-  return noStoreJson({ ok: true });
+  return noStoreJson({ ok: true, revenue });
 }

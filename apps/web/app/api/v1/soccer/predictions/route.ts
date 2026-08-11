@@ -10,6 +10,7 @@ const facilitator = new BatchFacilitatorClient({
 
 const evmAddressPattern = /^0x[a-fA-F0-9]{40}$/;
 const x402PriceAtomicUsdc = "10000"; // $0.01 USDC in micro-units (1e6)
+const x402PriceUsdc = "0.01";
 const gatewayAuthValidityWindowSeconds = 604900;
 
 type SupportedKind = {
@@ -104,18 +105,24 @@ export async function GET(request: Request) {
         x402Version: 2,
         resource: {
           url: request.url,
-          description: "Precall Soccer Prediction Intelligence API",
+          description: "Precall soccer intelligence feed for developer clients and autonomous agents",
           mimeType: "application/json"
         },
         accepts
       };
 
       const headerBase64 = Buffer.from(JSON.stringify(paymentRequired)).toString("base64");
-      return new NextResponse(JSON.stringify({}), {
+      return new NextResponse(JSON.stringify({
+        error: "payment_required",
+        description: "Pay 0.01 USDC through Circle x402 to access the latest Precall soccer intelligence feed.",
+        x402Version: 2,
+        accepts: accepts.length,
+      }), {
         status: 402,
         headers: {
           "PAYMENT-REQUIRED": headerBase64,
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
+          "Cache-Control": "no-store",
         }
       });
     } catch (error) {
@@ -185,11 +192,18 @@ export async function GET(request: Request) {
     await createDb().insert(circleActions).values({
       actionType: "x402_api_sale",
       txHash,
-      amountUsdc: "0.01",
+      amount: x402PriceUsdc,
+      amountUsdc: x402PriceUsdc,
       walletAddress: settleResult.payer || verifyResult.payer || "",
       chain: payload.accepted?.network || "Arc Testnet",
       status: "success",
-    });
+      metadata: {
+        product: "soccer_predictions_api",
+        x402Version: 2,
+        acceptedNetwork: payload.accepted?.network || "",
+        acceptedAsset: payload.accepted?.asset || "",
+      },
+    }).onConflictDoNothing();
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
     return NextResponse.json({ error: "Circle Gateway validation error", details: msg }, { status: 400 });
@@ -208,7 +222,9 @@ export async function GET(request: Request) {
     status: 200,
     headers: {
       "PAYMENT-RESPONSE": paymentResponse,
-      "Content-Type": "application/json"
+      "Content-Type": "application/json",
+      "Cache-Control": "no-store",
+      "X-Precall-Result-Count": String(predictions.length),
     }
   });
 }

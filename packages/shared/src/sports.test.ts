@@ -92,6 +92,19 @@ test("sports classifier catches FIFA matchup slugs without team-name hints", () 
   assert.equal(classification.marketKind, "moneyline");
 });
 
+test("sports classifier catches Liga MX slugs and club names", () => {
+  const classification = classifySportsMarket(market({
+    title: "Club Necaxa vs Toluca: Match Winner",
+    slug: "ligamx-nec-tol-2026-08-12-nec",
+    url: "https://polymarket.com/market/ligamx-nec-tol-2026-08-12-nec",
+    description: "Mexican soccer market.",
+    closeTime: "2026-08-12T02:00:00.000Z",
+  }));
+  assert.equal(classification.isSports, true);
+  assert.equal(classification.category, "soccer");
+  assert.equal(classification.marketKind, "moneyline");
+});
+
 test("sports classifier catches FIFA matchup slugs when Gamma only exposes them in the URL", () => {
   const classification = classifySportsMarket(market({
     title: "Will Bosnia and Herzegovina win on 2026-06-12?",

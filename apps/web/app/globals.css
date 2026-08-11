@@ -1726,3 +1726,117 @@ body {
     border-bottom: 1px solid rgba(255, 255, 255, 0.24);
   }
 }
+
+
+/* Mainnet-readiness product polish: clearer unlock state, API affordance, and mobile-safe cards. */
+.api-pill {
+  width: fit-content;
+  border-color: rgba(9, 17, 31, 0.24);
+  background: rgba(159, 231, 220, 0.34);
+  color: var(--taste-ink, var(--ink));
+}
+
+.api-inline-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 0.42fr);
+  gap: 18px;
+  align-items: center;
+}
+
+.api-inline-panel h3,
+.tip-jar-widget h4 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+}
+
+.api-inline-panel code,
+.tip-wallet {
+  display: inline-block;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.72);
+  padding: 2px 6px;
+  font-size: 0.86em;
+}
+
+.sports-prediction-banner small {
+  color: rgba(9, 17, 31, 0.66);
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.unlock-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.unlock-steps span {
+  display: grid;
+  place-items: center;
+  min-height: 34px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.76);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.unlock-status {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.76);
+  overflow-wrap: anywhere;
+}
+
+.tip-jar-widget {
+  display: grid;
+  gap: 10px;
+  margin-top: 1.5rem;
+  border-style: dashed;
+  background: linear-gradient(145deg, rgba(255, 253, 242, 0.94), rgba(255, 255, 255, 0.9));
+}
+
+.tip-jar-widget p,
+.tip-options {
+  margin: 0;
+}
+
+.tip-button {
+  cursor: pointer;
+  color: inherit;
+}
+
+.sports-call-card,
+.call-card,
+.unlock-cta-panel,
+.analysis-shell {
+  min-width: 0;
+}
+
+@media (max-width: 760px) {
+  .api-inline-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .unlock-steps {
+    grid-template-columns: 1fr;
+  }
+
+  .sports-prediction-banner strong,
+  .analysis-metric-grid strong,
+  .score {
+    overflow-wrap: anywhere;
+  }
+}

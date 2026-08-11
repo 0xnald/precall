@@ -26,9 +26,11 @@ export type SportsEvidenceTag =
 
 export type CircleActionType =
   | "x402_api_payment"
+  | "x402_api_sale"
   | "arc_bond"
   | "thesis_unlock"
   | "sports_unlock"
+  | "thesis_tip"
   | "gateway_deposit"
   | "gateway_withdrawal"
   | "bond_call"
