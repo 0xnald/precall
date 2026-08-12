@@ -7,6 +7,7 @@ import { externalX402EvidenceRuntimeConfig, fetchAisaX402SocialEvidence, fetchFi
 import { analysisPriceSkipReason, evaluateMarketEligibility, rankMarketCandidates, scoreMarketCandidate, summarizeSkipReasons, type MarketCandidateScore } from "@precall/shared/market-eligibility";
 import { publishAggregatedCallOnchain, registerAgentOnchain, resolveCallOnchain } from "@precall/shared/onchain/precall";
 import {
+  discoverPolymarketFootballMarkets,
   discoverPolymarketMarkets,
   fetchMarketSnapshot,
   fetchOutcomeSnapshot,
@@ -768,7 +769,7 @@ export async function runSportsEdge() {
     ownerWallet: optionalEnv("AGENT_OWNER_WALLET", "0x0000000000000000000000000000000000000000"),
   });
   const expiryUpdate = await expirePublishedCalls();
-  const markets = await discoverPolymarketMarkets(discoveryLimit);
+  const markets = await discoverPolymarketFootballMarkets(discoveryLimit);
   const skipped: SportsSkip[] = [];
   const failed: RunFailedMarket[] = [];
   const candidates: SportsCandidate[] = [];

@@ -1,4 +1,5 @@
-import { optionalEnv } from "./env";
+import { execFileSync } from "node:child_process";
+import { numberEnv, optionalEnv } from "./env";
 import type { MarketResolution, MarketSnapshot, OutcomeSnapshot, PolymarketMarket, SelectedOutcomeResolution } from "./types";
 
 interface GammaMarket {
@@ -23,6 +24,15 @@ interface GammaMarket {
   updatedAt?: string;
   closedTime?: string;
   umaResolutionStatus?: string;
+}
+
+interface GammaEvent {
+  slug?: string;
+  ticker?: string;
+  active?: boolean;
+  closed?: boolean;
+  archived?: boolean;
+  markets?: GammaMarket[];
 }
 
 interface ClobMarket {
@@ -56,7 +66,24 @@ function toNumber(value: unknown): number {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
-import { execSync } from "node:child_process";
+const defaultFootballSportsPaths = [
+  "/sports/lec/games",
+  "/sports/usc/games",
+  "/sports/mls/games",
+  "/sports/lib/games",
+  "/sports/sud/games",
+  "/sports/mex/games",
+  "/sports/ucl/games",
+  "/sports/uel/games",
+  "/sports/ucol/games",
+  "/sports/clf/games",
+  "/sports/epl/games",
+  "/sports/laliga/games",
+  "/sports/ere/games",
+  "/sports/ligue-1/games",
+  "/sports/bra/games",
+  "/sports/argpn/games",
+];
 
 async function fetchJson<T>(url: string, timeoutMs = 15_000): Promise<T> {
   const controller = new AbortController();
@@ -73,9 +100,33 @@ async function fetchJson<T>(url: string, timeoutMs = 15_000): Promise<T> {
     return (await response.json()) as T;
   } catch (fetchError) {
     try {
-      const stdout = execSync(`curl -s -m 15 -H "accept: application/json" "${url}"`, { encoding: "utf-8" });
+      const stdout = execFileSync("curl", ["-s", "-m", "15", "-H", "accept: application/json", url], { encoding: "utf-8" });
       return JSON.parse(stdout) as T;
-    } catch (curlError) {
+    } catch {
+      throw fetchError;
+    }
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function fetchText(url: string, timeoutMs = 15_000): Promise<string> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(url, {
+      headers: { accept: "text/html,application/xhtml+xml" },
+      signal: controller.signal,
+    });
+    if (!response.ok) {
+      throw new Error(`${url} returned ${response.status}`);
+    }
+    return await response.text();
+  } catch (fetchError) {
+    try {
+      return execFileSync("curl", ["-s", "-m", "15", "-H", "accept: text/html", url], { encoding: "utf-8" });
+    } catch {
       throw fetchError;
     }
   } finally {
@@ -84,16 +135,7 @@ async function fetchJson<T>(url: string, timeoutMs = 15_000): Promise<T> {
 }
 
 export async function discoverPolymarketMarkets(limit = 25): Promise<PolymarketMarket[]> {
-  const baseUrl = optionalEnv("POLYMARKET_GAMMA_URL", "https://gamma-api.polymarket.com");
-  const url = new URL("/markets", baseUrl);
-  url.searchParams.set("closed", "false");
-  url.searchParams.set("active", "true");
-  url.searchParams.set("limit", String(limit));
-  url.searchParams.set("order", "volume24hr");
-  url.searchParams.set("ascending", "false");
-
-  const payload = await fetchJson<GammaMarket[] | { markets?: GammaMarket[] }>(url.toString());
-  const rawMarkets = Array.isArray(payload) ? payload : payload.markets || [];
+  const rawMarkets = await fetchGammaMarketsPage(limit);
 
   return rawMarkets
     .map(normalizeGammaMarket)
@@ -101,6 +143,153 @@ export async function discoverPolymarketMarkets(limit = 25): Promise<PolymarketM
     .filter((market) => market.status === "active")
     .filter((market) => !market.closeTime || new Date(market.closeTime).getTime() > Date.now())
     .slice(0, limit);
+}
+
+export async function discoverPolymarketFootballMarkets(limit = 350): Promise<PolymarketMarket[]> {
+  const footballMarkets = await discoverFootballSportsPageMarkets(limit);
+  const fallbackMarkets = await discoverPaginatedPolymarketMarkets(
+    Math.max(limit, footballMarkets.length),
+    footballGlobalDiscoveryPages(),
+  );
+
+  const footballFirstMarkets = [
+    ...footballMarkets.sort(footballDiscoverySort),
+    ...fallbackMarkets.sort(footballDiscoverySort),
+  ];
+
+  return dedupeMarkets(footballFirstMarkets)
+    .filter((market) => market.status === "active")
+    .filter((market) => !market.closeTime || new Date(market.closeTime).getTime() > Date.now())
+    .slice(0, limit);
+}
+
+async function discoverPaginatedPolymarketMarkets(limit: number, pages: number): Promise<PolymarketMarket[]> {
+  const pageSize = Math.min(100, Math.max(1, limit));
+  const offsets = Array.from({ length: Math.max(1, pages) }, (_item, page) => page * pageSize);
+  const pageResults = await Promise.all(offsets.map((offset) => fetchGammaMarketsPage(pageSize, offset).catch(() => [])));
+  const rawMarkets = pageResults.flat();
+
+  return rawMarkets
+    .map(normalizeGammaMarket)
+    .filter((market): market is PolymarketMarket => Boolean(market));
+}
+
+async function fetchGammaMarketsPage(limit: number, offset = 0) {
+  const baseUrl = optionalEnv("POLYMARKET_GAMMA_URL", "https://gamma-api.polymarket.com");
+  const url = new URL("/markets", baseUrl);
+  url.searchParams.set("closed", "false");
+  url.searchParams.set("active", "true");
+  url.searchParams.set("limit", String(limit));
+  if (offset > 0) url.searchParams.set("offset", String(offset));
+  url.searchParams.set("order", "volume24hr");
+  url.searchParams.set("ascending", "false");
+
+  const payload = await fetchJson<GammaMarket[] | { markets?: GammaMarket[] }>(url.toString());
+  return Array.isArray(payload) ? payload : payload.markets || [];
+}
+
+async function discoverFootballSportsPageMarkets(limit: number): Promise<PolymarketMarket[]> {
+  const eventSlugs = await discoverFootballEventSlugs();
+  const events = await mapWithConcurrency(
+    eventSlugs.slice(0, footballEventLimit()),
+    footballEventConcurrency(),
+    (slug) => fetchGammaEventBySlug(slug).catch(() => null),
+  );
+  const markets = events
+    .filter((event): event is GammaEvent => event !== null)
+    .filter((event) => event.closed !== true && event.active !== false && event.archived !== true)
+    .flatMap(eventMarkets);
+
+  return dedupeMarkets(markets).slice(0, Math.max(limit * 2, limit));
+}
+
+async function discoverFootballEventSlugs() {
+  const htmlPages = await Promise.all(footballSportsPagePaths().map((path) => {
+    const pageUrl = new URL(path, "https://polymarket.com");
+    return fetchText(pageUrl.toString()).catch(() => "");
+  }));
+  return [...new Set(htmlPages.flatMap(extractSportsEventSlugs))].slice(0, footballEventLimit());
+}
+
+function extractSportsEventSlugs(html: string) {
+  const slugs = new Set<string>();
+  const normalized = html.replace(/\\\//g, "/");
+  const pattern = /(?:https?:\/\/polymarket\.com)?\/sports\/[a-z0-9-]+\/([a-z0-9]+(?:-[a-z0-9]+)*-\d{4}-\d{2}-\d{2})(?=["/?#<\\]|$)/gi;
+  for (const match of normalized.matchAll(pattern)) {
+    const slug = match[1];
+    if (slug && slug !== "games") slugs.add(slug);
+  }
+  return [...slugs];
+}
+
+async function fetchGammaEventBySlug(slug: string) {
+  const baseUrl = optionalEnv("POLYMARKET_GAMMA_URL", "https://gamma-api.polymarket.com");
+  const url = new URL(`/events/slug/${slug}`, baseUrl);
+  return fetchJson<GammaEvent>(url.toString());
+}
+
+function eventMarkets(event: GammaEvent) {
+  return (event.markets || [])
+    .map(normalizeGammaMarket)
+    .filter((market): market is PolymarketMarket => Boolean(market))
+    .filter((market) => market.status === "active")
+    .filter((market) => !market.closeTime || new Date(market.closeTime).getTime() > Date.now());
+}
+
+function footballSportsPagePaths() {
+  return optionalEnv("POLYMARKET_FOOTBALL_SPORTS_PATHS", defaultFootballSportsPaths.join(","))
+    .split(",")
+    .map((path) => path.trim())
+    .filter(Boolean)
+    .map((path) => path.startsWith("/") ? path : `/${path}`);
+}
+
+function footballEventLimit() {
+  return numberEnv("POLYMARKET_FOOTBALL_EVENT_LIMIT", 80);
+}
+
+function footballEventConcurrency() {
+  return Math.max(1, Math.min(16, numberEnv("POLYMARKET_FOOTBALL_EVENT_CONCURRENCY", 8)));
+}
+
+function footballGlobalDiscoveryPages() {
+  return numberEnv("POLYMARKET_FOOTBALL_GLOBAL_PAGES", 8);
+}
+
+async function mapWithConcurrency<T, R>(items: T[], concurrency: number, mapper: (item: T) => Promise<R>): Promise<R[]> {
+  const results = new Array<R>(items.length);
+  let nextIndex = 0;
+  const workers = Array.from({ length: Math.min(concurrency, items.length) }, async () => {
+    while (nextIndex < items.length) {
+      const currentIndex = nextIndex;
+      nextIndex += 1;
+      const item = items[currentIndex];
+      if (item !== undefined) results[currentIndex] = await mapper(item);
+    }
+  });
+  await Promise.all(workers);
+  return results;
+}
+
+function dedupeMarkets(markets: PolymarketMarket[]) {
+  const seen = new Set<string>();
+  const deduped: PolymarketMarket[] = [];
+  for (const market of markets) {
+    const key = market.marketId || market.conditionId || market.slug;
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    deduped.push(market);
+  }
+  return deduped;
+}
+
+function footballDiscoverySort(left: PolymarketMarket, right: PolymarketMarket) {
+  const leftTime = left.closeTime ? new Date(left.closeTime).getTime() : Number.MAX_SAFE_INTEGER;
+  const rightTime = right.closeTime ? new Date(right.closeTime).getTime() : Number.MAX_SAFE_INTEGER;
+  const now = Date.now();
+  const leftFuture = leftTime > now ? leftTime : Number.MAX_SAFE_INTEGER;
+  const rightFuture = rightTime > now ? rightTime : Number.MAX_SAFE_INTEGER;
+  return leftFuture - rightFuture || right.volume24hUsd - left.volume24hUsd || right.liquidityUsd - left.liquidityUsd;
 }
 
 export async function fetchPolymarketResolution(marketId: string): Promise<MarketResolution | null> {

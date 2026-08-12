@@ -401,6 +401,12 @@ SPORTS_REQUIRE_SOURCE_BACKED_NEWS=true
 
 ENABLE_SPORTS_EDGE=true
 SPORTS_DISCOVERY_MARKET_LIMIT=350
+# The sports worker discovers football fixtures from Polymarket sports pages first,
+# then uses paginated global Gamma discovery as a fallback.
+POLYMARKET_FOOTBALL_SPORTS_PATHS=/sports/lec/games,/sports/usc/games,/sports/mls/games,/sports/lib/games,/sports/sud/games,/sports/mex/games,/sports/ucl/games,/sports/uel/games,/sports/ucol/games,/sports/clf/games,/sports/epl/games,/sports/laliga/games,/sports/ere/games,/sports/ligue-1/games,/sports/bra/games,/sports/argpn/games
+POLYMARKET_FOOTBALL_EVENT_LIMIT=80
+POLYMARKET_FOOTBALL_EVENT_CONCURRENCY=8
+POLYMARKET_FOOTBALL_GLOBAL_PAGES=8
 SPORTS_DAILY_TARGET=8
 MAX_SPORTS_ANALYZED_PER_RUN=24
 SPORTS_LOOKAHEAD_HOURS=72

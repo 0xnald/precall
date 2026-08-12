@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { fetchMarketSnapshot, fetchPolymarketSelectedOutcomeResolution } from "./polymarket";
+import { discoverPolymarketFootballMarkets, fetchMarketSnapshot, fetchPolymarketSelectedOutcomeResolution } from "./polymarket";
 import type { PolymarketMarket } from "./types";
 
 function market(overrides: Partial<PolymarketMarket> = {}): PolymarketMarket {
@@ -22,6 +22,86 @@ function market(overrides: Partial<PolymarketMarket> = {}): PolymarketMarket {
     ...overrides,
   };
 }
+
+test("discoverPolymarketFootballMarkets starts from sports event pages before global Gamma fallback", async () => {
+  const originalFetch = globalThis.fetch;
+  const originalPaths = process.env.POLYMARKET_FOOTBALL_SPORTS_PATHS;
+  const originalEventLimit = process.env.POLYMARKET_FOOTBALL_EVENT_LIMIT;
+  const originalGlobalPages = process.env.POLYMARKET_FOOTBALL_GLOBAL_PAGES;
+  const requested: string[] = [];
+  process.env.POLYMARKET_FOOTBALL_SPORTS_PATHS = "/sports/lec/games";
+  process.env.POLYMARKET_FOOTBALL_EVENT_LIMIT = "5";
+  process.env.POLYMARKET_FOOTBALL_GLOBAL_PAGES = "2";
+
+  globalThis.fetch = async (url) => {
+    const href = String(url);
+    requested.push(href);
+    if (href === "https://polymarket.com/sports/lec/games") {
+      return new Response(`{"url":"https:\/\/polymarket.com\/sports\/lec\/lec-mia-leo-2099-08-12"}`, { status: 200, headers: { "content-type": "text/html" } });
+    }
+    if (href.includes("/events/slug/lec-mia-leo-2099-08-12")) {
+      return new Response(JSON.stringify({
+        slug: "lec-mia-leo-2099-08-12",
+        active: true,
+        closed: false,
+        archived: false,
+        markets: [{
+          id: "3143030",
+          question: "Will Inter Miami CF win on 2099-08-12?",
+          conditionId: "condition-mia",
+          slug: "lec-mia-leo-2099-08-12-mia",
+          active: true,
+          closed: false,
+          archived: false,
+          acceptingOrders: true,
+          outcomes: JSON.stringify(["Yes", "No"]),
+          outcomePrices: JSON.stringify(["0.495", "0.505"]),
+          clobTokenIds: JSON.stringify(["yes-token", "no-token"]),
+          liquidity: "29171.3841",
+          volume24hr: "10860.324105",
+          endDate: "2099-08-12T23:30:00Z",
+          description: "Leagues Cup match market.",
+        }],
+      }), { status: 200, headers: { "content-type": "application/json" } });
+    }
+    if (href.includes("/markets")) {
+      const markets = href.includes("offset=") ? [] : Array.from({ length: 100 }, (_item, index) => ({
+        id: `global-politics-${index}`,
+        question: `Will non-football market ${index} happen?`,
+        conditionId: `condition-global-${index}`,
+        slug: `non-football-market-${index}`,
+        active: true,
+        closed: false,
+        archived: false,
+        acceptingOrders: true,
+        outcomes: JSON.stringify(["Yes", "No"]),
+        outcomePrices: JSON.stringify(["0.5", "0.5"]),
+        liquidity: "100000",
+        volume24hr: "999999",
+        endDate: "2099-08-12T20:00:00Z",
+      }));
+      return new Response(JSON.stringify(markets), { status: 200, headers: { "content-type": "application/json" } });
+    }
+    return new Response("not found", { status: 404 });
+  };
+
+  try {
+    const markets = await discoverPolymarketFootballMarkets(5);
+    assert.equal(markets[0]?.marketId, "3143030");
+    assert.equal(markets[0]?.title, "Will Inter Miami CF win on 2099-08-12?");
+    assert.ok(requested.some((href) => href.includes("/events/slug/lec-mia-leo-2099-08-12")));
+    assert.ok(requested.some((href) => href.includes("offset=")));
+  } finally {
+    globalThis.fetch = originalFetch;
+    if (originalPaths === undefined) delete process.env.POLYMARKET_FOOTBALL_SPORTS_PATHS;
+    else process.env.POLYMARKET_FOOTBALL_SPORTS_PATHS = originalPaths;
+    if (originalEventLimit === undefined) delete process.env.POLYMARKET_FOOTBALL_EVENT_LIMIT;
+    else process.env.POLYMARKET_FOOTBALL_EVENT_LIMIT = originalEventLimit;
+    if (originalGlobalPages === undefined) delete process.env.POLYMARKET_FOOTBALL_GLOBAL_PAGES;
+    else process.env.POLYMARKET_FOOTBALL_GLOBAL_PAGES = originalGlobalPages;
+  }
+});
+
 
 test("fetchMarketSnapshot uses the YES token and computes best bid/ask spread from unsorted CLOB levels", async () => {
   const originalFetch = globalThis.fetch;

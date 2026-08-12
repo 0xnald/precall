@@ -118,6 +118,35 @@ test("sports classifier catches FIFA matchup slugs when Gamma only exposes them 
 });
 
 
+test("sports classifier treats UEFA Super Cup and Leagues Cup club markets as soccer", () => {
+  for (const candidate of [
+    market({
+      title: "Will Paris Saint-Germain win on 2026-08-12?",
+      slug: "usc-psg-av-2026-08-12-psg",
+      description: "UEFA Super Cup game between Paris Saint-Germain and Aston Villa.",
+      closeTime: "2026-08-12T19:00:00.000Z",
+    }),
+    market({
+      title: "Will Aston Villa win on 2026-08-12?",
+      slug: "usc-psg-av-2026-08-12-av",
+      description: "UEFA Super Cup game between Paris Saint-Germain and Aston Villa.",
+      closeTime: "2026-08-12T19:00:00.000Z",
+    }),
+    market({
+      title: "Will Inter Miami CF win on 2026-08-12?",
+      slug: "lec-mia-leo-2026-08-12-mia",
+      description: "Leagues Cup match market.",
+      closeTime: "2026-08-12T23:30:00.000Z",
+    }),
+  ]) {
+    const classification = classifySportsMarket(candidate);
+    assert.equal(classification.isSports, true, candidate.title);
+    assert.equal(classification.category, "soccer", candidate.title);
+    assert.equal(classification.marketKind, "moneyline", candidate.title);
+  }
+});
+
+
 test("sports evidence grouping reuses one marketplace packet for related soccer markets", () => {
   const baseMarket = market({
     title: "Will Argentina win on 2026-07-19?",
